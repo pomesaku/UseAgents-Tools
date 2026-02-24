@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <title>⚖️ グラム単価・瞬殺比較ツール｜どっちがお得か一発計算</title>
+    <meta name="description" content="スーパーでの買い物で「AとB、どっちが安いの？」を1秒で解決！内容量と値段を入れるだけで、グラム単価・1個あたりの単価を瞬殺で比較する無料の節約ツールです。">
+    <meta name="keywords" content="グラム単価,単価計算,どっちが安い,比較ツール,節約,買い物,スーパー">
+    <link rel="canonical" href="https://pomesaku.github.io/UseAgents-Tools/UnitPriceCalc/">
+    
+    <meta property="og:title" content="⚖️ グラム単価・瞬殺比較ツール">
+    <meta property="og:description" content="スーパーの棚の前で迷わない！内容量と値段を入れるだけで「どっちがお得か」を1秒で計算します。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pomesaku.github.io/UseAgents-Tools/UnitPriceCalc/">
+    <meta name="twitter:card" content="summary">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#43a047">
+    <script>if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }</script>
+    
+    <style>
+        body { font-family: "Hiragino Maru Gothic ProN", "Meiryo", sans-serif; background: #e8f5e9; color: #333; max-width: 600px; margin: 0 auto; padding: 15px; }
+        h1 { font-size: 1.4rem; text-align: center; color: #2e7d32; margin-bottom: 5px;}
+        p.subtitle { text-align: center; font-size: 0.85rem; color: #388e3c; margin-bottom: 20px; }
+        
+        .flex-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        .product-card { flex: 1; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 5px solid #ccc; position: relative;}
+        .product-card.a { border-color: #ef5350; }
+        .product-card.b { border-color: #42a5f5; }
+        .card-label { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); color: #fff; font-weight: bold; padding: 4px 15px; border-radius: 20px; font-size: 0.9rem;}
+        .product-card.a .card-label { background: #ef5350; }
+        .product-card.b .card-label { background: #42a5f5; }
+
+        label { font-size: 0.85rem; color: #555; display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold;}
+        /* inputmode="numeric" でスマホのテンキーを強制表示 */
+        input[type="number"] { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 18px; box-sizing: border-box; background: #fafafa; font-weight: bold; color: #333; text-align: right;}
+        input:focus { border-color: #4caf50; outline: none; background: #fff;}
+        .input-group { position: relative; }
+        .input-unit { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #888; font-size: 0.9rem; font-weight: bold;}
+        input[type="number"] { padding-right: 40px; }
+
+        .calc-btn { background: #4caf50; color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #2e7d32; transition: 0.2s; margin-bottom: 10px;}
+        .calc-btn:active { transform: translateY(4px); box-shadow: none; }
+        .clear-btn { background: #bdbdbd; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 25px;}
+        
+        /* 結果表示エリア */
+        .result-box { display: none; background: #fff; padding: 25px 20px; border-radius: 12px; border: 3px solid #4caf50; text-align: center; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .winner-title { font-size: 1.3rem; color: #2e7d32; margin-top: 0; margin-bottom: 10px; font-weight: bold;}
+        .winner-text { font-size: 2rem; font-weight: bold; color: #d32f2f; margin: 10px 0;}
+        .detail-text { font-size: 0.95rem; color: #555; background: #f5f5f5; padding: 10px; border-radius: 8px; margin-top: 15px; text-align: left; line-height: 1.5;}
+
+        /* ▼ マネタイズ特等席（デリズ広告） ▼ */
+        .ad-box { margin-top: 30px; padding: 20px; background: #fff3e0; border: 2px dashed #ff9800; border-radius: 12px; text-align: center;}
+        .ad-copy { font-size: 1rem; color: #d84315; font-weight: bold; margin: 0 0 10px 0; line-height: 1.5; }
+        .ad-sub { font-size: 0.85rem; color: #795548; margin-bottom: 15px;}
+        
+        /* A8のリンクをボタン化 */
+        .ad-btn { display:block; background:#ff5722; color:#fff; padding:16px; text-decoration:none; border-radius:8px; font-weight:bold; font-size: 1.1rem; box-shadow: 0 4px 0 #d84315; transition: 0.2s; }
+        .ad-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        /* 1x1のビーコン画像を非表示にしてレイアウト崩れを防ぐ */
+        .ad-box img { display: none; }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>⚖️ グラム単価・瞬殺比較</h1>
+        <p class="subtitle">1秒で「どっちがお得か」白黒つけます</p>
+
+        <div class="flex-container">
+            <section class="product-card a">
+                <div class="card-label">商品 A</div>
+                <label>💰 値段（税込）</label>
+                <div class="input-group">
+                    <input type="number" id="price-a" inputmode="numeric" placeholder="0">
+                    <span class="input-unit">円</span>
+                </div>
+                <label>⚖️ 内容量（g/ml/個）</label>
+                <div class="input-group">
+                    <input type="number" id="amount-a" inputmode="numeric" placeholder="0">
+                    <span class="input-unit">量</span>
+                </div>
+            </section>
+
+            <section class="product-card b">
+                <div class="card-label">商品 B</div>
+                <label>💰 値段（税込）</label>
+                <div class="input-group">
+                    <input type="number" id="price-b" inputmode="numeric" placeholder="0">
+                    <span class="input-unit">円</span>
+                </div>
+                <label>⚖️ 内容量（g/ml/個）</label>
+                <div class="input-group">
+                    <input type="number" id="amount-b" inputmode="numeric" placeholder="0">
+                    <span class="input-unit">量</span>
+                </div>
+            </section>
+        </div>
+
+        <button class="calc-btn" onclick="calculateWinner()">どっちがお得？</button>
+        <button class="clear-btn" onclick="clearInputs()">リセット</button>
+
+        <section class="result-box" id="result-box">
+            <h2 class="winner-title" id="winner-title">🎉 お得なのは...</h2>
+            <div class="winner-text" id="winner-display">商品 A</div>
+            
+            <div class="detail-text" id="detail-display">
+                商品A: 100あたり 0円<br>
+                商品B: 100あたり 0円<br>
+                (商品Aの方が、100あたり〇円お得！)
+            </div>
+        </section>
+
+        <aside class="ad-box">
+            <p class="ad-copy">🛒 計算してたら自炊するのが<br>面倒くさくなってきた…？</p>
+            <p class="ad-sub">今日の夕飯は、ラクして美味しい出前にしませんか👇</p>
+            
+            <a href="https://px.a8.net/svt/ejp?a8mat=4AXISC+DYHWW2+4KUG+5YRHE" rel="nofollow" class="ad-btn">出前を頼むなら【デリズ】公式サイトへ</a>
+            <img border="0" width="1" height="1" src="https://www15.a8.net/0.gif?a8mat=4AXISC+DYHWW2+4KUG+5YRHE" alt="">
+        </aside>
+    </main>
+
+    <script>
+        function calculateWinner() {
+            const priceA = parseFloat(document.getElementById('price-a').value);
+            const amountA = parseFloat(document.getElementById('amount-a').value);
+            const priceB = parseFloat(document.getElementById('price-b').value);
+            const amountB = parseFloat(document.getElementById('amount-b').value);
+
+            if (!priceA || !amountA || !priceB || !amountB) {
+                alert("AとB、両方の値段と内容量を入力してください！");
+                return;
+            }
+
+            // 1単位（1g、1mlなど）あたりの単価を計算
+            const unitPriceA = priceA / amountA;
+            const unitPriceB = priceB / amountB;
+
+            // 人間が分かりやすいように「100単位（100gなど）あたり」の価格に変換
+            const per100A = (unitPriceA * 100).toFixed(1);
+            const per100B = (unitPriceB * 100).toFixed(1);
+
+            let winnerName = "";
+            let diffText = "";
+            let winnerColor = "";
+
+            if (unitPriceA < unitPriceB) {
+                winnerName = "🥇 商品 A がお得！";
+                winnerColor = "#ef5350";
+                const diff = (per100B - per100A).toFixed(1);
+                diffText = `👉 買うなら【A】！<br>100(量)あたり、Aの方が ${diff} 円安いです。`;
+            } else if (unitPriceB < unitPriceA) {
+                winnerName = "🥇 商品 B がお得！";
+                winnerColor = "#42a5f5";
+                const diff = (per100A - per100B).toFixed(1);
+                diffText = `👉 買うなら【B】！<br>100(量)あたり、Bの方が ${diff} 円安いです。`;
+            } else {
+                winnerName = "🤝 完全に同じ（引き分け）";
+                winnerColor = "#4caf50";
+                diffText = "どちらを買ってもコスパは全く同じです。好きな方をどうぞ！";
+            }
+
+            // 結果を画面に反映
+            document.getElementById('winner-display').innerText = winnerName;
+            document.getElementById('winner-display').style.color = winnerColor;
+            
+            document.getElementById('detail-display').innerHTML = `
+                <strong>📊 100(量)あたりの単価</strong><br>
+                商品A：約 ${per100A} 円<br>
+                商品B：約 ${per100B} 円<br>
+                <hr style="border:0; border-top:1px dashed #ccc; margin: 10px 0;">
+                ${diffText}
+            `;
+
+            document.getElementById('result-box').style.display = 'block';
+            
+            // スマホ利用を想定し、結果まで少しスクロール
+            setTimeout(() => {
+                document.getElementById('result-box').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+
+        function clearInputs() {
+            document.getElementById('price-a').value = '';
+            document.getElementById('amount-a').value = '';
+            document.getElementById('price-b').value = '';
+            document.getElementById('amount-b').value = '';
+            document.getElementById('result-box').style.display = 'none';
+            document.getElementById('price-a').focus();
+        }
+    </script>
+</body>
+</html>
