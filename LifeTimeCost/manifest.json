@@ -1,6 +1,6 @@
 { 
-  "name": "絶望の寿命換算ツール", 
-  "short_name": "寿命換算", 
+  "name": "労働ダメージ計算機", 
+  "short_name": "労働ダメージ計算機", 
   "start_url": "./", 
   "display": "standalone", 
   "background_color": "#ffffff", 
