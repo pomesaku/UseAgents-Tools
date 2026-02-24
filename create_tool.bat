@@ -10,40 +10,36 @@ set /p app_name="2. アプリの正式名称（例: 神・割り勘ツール）:
 set /p short_name="3. スマホのホーム画面に表示する短い名前（例: 割り勘）: "
 
 :: フォルダの作成
-mkdir %tool_dir%
+mkdir "%tool_dir%"
 
-:: sw.jsの自動生成（キャッシュ名もツールごとに自動で分ける設定）
-(
-echo const CACHE_NAME = '%tool_dir%-v1'^;
-echo const urlsToCache = [ './', './index.html', './manifest.json', './icon-192.png' ]^;
-echo.
-echo self.addEventListener('install', event =^> {
-echo   event.waitUntil(caches.open(CACHE_NAME).then(cache =^> cache.addAll(urlsToCache)))^;
-echo })^;
-echo.
-echo self.addEventListener('fetch', event =^> {
-echo   event.respondWith(caches.match(event.request).then(response =^> response ^|^| fetch(event.request)))^;
-echo })^;
-) > %tool_dir%\sw.js
+:: sw.jsの自動生成（1行ずつ確実に書き込む方式）
+echo const CACHE_NAME = '%tool_dir%-v1'; > "%tool_dir%\sw.js"
+echo const urlsToCache = [ './', './index.html', './manifest.json', './icon-192.png' ]; >> "%tool_dir%\sw.js"
+echo. >> "%tool_dir%\sw.js"
+echo self.addEventListener('install', event =^> { >> "%tool_dir%\sw.js"
+echo   event.waitUntil(caches.open(CACHE_NAME).then(cache =^> cache.addAll(urlsToCache))); >> "%tool_dir%\sw.js"
+echo }); >> "%tool_dir%\sw.js"
+echo. >> "%tool_dir%\sw.js"
+echo self.addEventListener('fetch', event =^> { >> "%tool_dir%\sw.js"
+echo   event.respondWith(caches.match(event.request).then(response =^> response ^|^| fetch(event.request))); >> "%tool_dir%\sw.js"
+echo }); >> "%tool_dir%\sw.js"
 
-:: manifest.jsonの自動生成（入力された名前を埋め込む）
-(
-echo {
-echo   "name": "%app_name%",
-echo   "short_name": "%short_name%",
-echo   "start_url": "./",
-echo   "display": "standalone",
-echo   "background_color": "#ffffff",
-echo   "theme_color": "#1565c0",
-echo   "icons": [
-echo     {
-echo       "src": "icon-192.png",
-echo       "sizes": "192x192",
-echo       "type": "image/png"
-echo     }
-echo   ]
-echo }
-) > %tool_dir%\manifest.json
+:: manifest.jsonの自動生成
+echo { > "%tool_dir%\manifest.json"
+echo   "name": "%app_name%", >> "%tool_dir%\manifest.json"
+echo   "short_name": "%short_name%", >> "%tool_dir%\manifest.json"
+echo   "start_url": "./", >> "%tool_dir%\manifest.json"
+echo   "display": "standalone", >> "%tool_dir%\manifest.json"
+echo   "background_color": "#ffffff", >> "%tool_dir%\manifest.json"
+echo   "theme_color": "#455a64", >> "%tool_dir%\manifest.json"
+echo   "icons": [ >> "%tool_dir%\manifest.json"
+echo     { >> "%tool_dir%\manifest.json"
+echo       "src": "icon-192.png", >> "%tool_dir%\manifest.json"
+echo       "sizes": "192x192", >> "%tool_dir%\manifest.json"
+echo       "type": "image/png" >> "%tool_dir%\manifest.json"
+echo     } >> "%tool_dir%\manifest.json"
+echo   ] >> "%tool_dir%\manifest.json"
+echo } >> "%tool_dir%\manifest.json"
 
 echo.
 echo ✨ [%tool_dir%] フォルダを作成し、PWAファイルを設定しました！

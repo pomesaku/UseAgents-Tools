@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💸 絶望の寿命換算ツール｜衝動買いストッパー</title>
+    <meta name="description" content="欲しいモノの値段と手取り月給から、それを買うために「何時間分の命（労働）」が削られるかを計算し、衝動買いを強制ストップさせる無料ツールです。">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#455a64">
+    <script>if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }</script>
+    <style>
+        body { font-family: "Hiragino Maru Gothic ProN", "Meiryo", sans-serif; background: #eceff1; color: #333; max-width: 600px; margin: 0 auto; padding: 15px; }
+        h1 { font-size: 1.4rem; text-align: center; color: #37474f; margin-bottom: 5px;}
+        p.subtitle { text-align: center; font-size: 0.85rem; color: #607d8b; margin-bottom: 20px; }
+        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 4px solid #455a64;}
+        label { font-weight: bold; font-size: 0.95rem; color: #455a64; display: block; margin-bottom: 8px;}
+        input[type="number"] { width: 100%; padding: 15px; margin-bottom: 20px; border: 2px solid #cfd8dc; border-radius: 8px; font-size: 18px; box-sizing: border-box; background: #f8fdff; font-weight: bold; color: #263238;}
+        input:focus { border-color: #607d8b; outline: none; }
+        .calc-btn { background: #37474f; color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #263238; transition: 0.2s;}
+        .calc-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        /* 絶望の結果エリア */
+        .result-box { display: none; background: #263238; color: #fff; padding: 25px 20px; border-radius: 12px; margin-top: 25px; text-align: center; animation: shake 0.5s;}
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
+        .result-box h2 { font-size: 1.2rem; color: #ff5252; margin-top: 0; margin-bottom: 15px;}
+        .cost-time { font-size: 2.2rem; font-weight: bold; color: #ff5252; margin: 10px 0; line-height: 1.2;}
+        .spicy-comment { background: #111; padding: 15px; border-radius: 8px; font-size: 0.95rem; line-height: 1.5; color: #eceff1; margin-bottom: 20px; border-left: 4px solid #ff5252;}
+        
+        .action-btns { display: flex; flex-direction: column; gap: 10px;}
+        .stop-btn { background: #4caf50; color: white; border: none; padding: 16px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #2e7d32;}
+        .buy-btn { background: transparent; color: #9e9e9e; border: 1px solid #757575; padding: 10px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; margin-top: 10px;}
+        
+        /* 広告エリア（将来の転職エージェント用） */
+        .ad-box { margin-top: 20px; padding: 15px; background: #fff; border: 1px dashed #b0bec5; border-radius: 8px; text-align: center;}
+        .ad-copy { font-size: 0.9rem; color: #d84315; font-weight: bold; margin: 0 0 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>💸 絶望の寿命換算ツール</h1>
+    <p class="subtitle">その衝動買い、あなたの命を何時間削りますか？</p>
+
+    <div class="card">
+        <label>🛒 欲しいモノの値段は？（円）</label>
+        <input type="number" id="item-price" placeholder="例: 15000">
+
+        <label>💼 あなたの手取り月給は？（円）</label>
+        <p style="font-size:0.75rem; color:#78909c; margin-top:-5px;">※月20日・1日8時間労働（計160時間）としてリアルな手取り時給を算出します</p>
+        <input type="number" id="monthly-salary" placeholder="例: 250000" value="250000">
+
+        <button class="calc-btn" onclick="calculateDespair()">寿命を換算する</button>
+    </div>
+
+    <div class="result-box" id="result-box">
+        <h2>⚠️ 警告</h2>
+        <p style="margin:0; font-size:0.9rem;">それを手に入れるためには、あなたの労働時間が</p>
+        <div class="cost-time" id="time-display">0時間 0分</div>
+        <p style="margin:0 0 15px 0; font-size:0.9rem;">奪われます。（約 <span id="days-display" style="font-weight:bold; font-size:1.2rem;">0</span> 日分の労働）</p>
+
+        <div class="spicy-comment" id="spicy-comment"></div>
+
+        <div class="action-btns">
+            <button class="stop-btn" onclick="document.getElementById('result-box').style.display='none'; alert('賢明な判断です。そのお金は未来のあなたを救います。');">やっぱり買うのをやめる</button>
+            <button class="buy-btn" onclick="alert('正気ですか？\nあなたの血と汗と涙の結晶が、今この瞬間に消え去ります。\nそれでも買うなら止めません。')">警告を無視してポチる</button>
+        </div>
+    </div>
+
+    <div class="ad-box">
+        <p class="ad-copy">🔥 「こんなに働いてこれだけか…」と絶望したあなたへ</p>
+        <a href="#" style="display:block; background:#ff9800; color:#fff; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; font-size: 1rem; box-shadow: 0 4px 0 #e65100;">💼 あなたの本当の市場価値を診断する（無料）</a>
+        <p style="font-size:0.75rem; color:#999; margin-top:8px;">※ここに後日、ビズリーチやDODAなどの高単価な転職案件を設置します</p>
+    </div>
+
+    <script>
+        function calculateDespair() {
+            const price = parseInt(document.getElementById('item-price').value);
+            const salary = parseInt(document.getElementById('monthly-salary').value);
+
+            if (!price || !salary || price <= 0 || salary <= 0) {
+                alert("正しい金額を入力してください。現実から目を背けないでください。");
+                return;
+            }
+
+            // 時給の計算（月160時間労働と仮定）
+            const hourlyWage = salary / 160;
+            
+            // 必要な労働時間
+            const totalHours = price / hourlyWage;
+            const hours = Math.floor(totalHours);
+            const minutes = Math.round((totalHours - hours) * 60);
+            const workDays = (totalHours / 8).toFixed(1);
+
+            document.getElementById('time-display').innerText = `${hours}時間 ${minutes}分`;
+            document.getElementById('days-display').innerText = workDays;
+
+            // 辛口コメントの分岐
+            let comment = "";
+            if (totalHours < 1) {
+                comment = "まあ、これくらいなら息抜きに買ってもバチは当たりません。日々の労働のささやかなご褒美ですね。";
+            } else if (totalHours < 8) {
+                comment = "丸1日、あの理不尽な会議や業務に耐えて稼いだお金が、この1タップで消え去ります。本当にそれだけの価値がありますか？";
+            } else if (totalHours < 40) {
+                comment = "正気ですか？あなたの1週間分の血と汗と涙が吹き飛びます。一旦スマホを閉じて深呼吸し、本当に必要か3日考えましょう。";
+            } else {
+                comment = "【致命的警告】これはあなたの人生の貴重な数ヶ月分に相当します。これをポチる前に、まずは時給を上げるための転職活動をおすすめします。";
+            }
+
+            document.getElementById('spicy-comment').innerText = comment;
+            document.getElementById('result-box').style.display = 'block';
+            document.getElementById('result-box').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
