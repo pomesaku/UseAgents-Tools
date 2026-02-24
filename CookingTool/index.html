@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>【無料】パパッと料理・計算ツール｜調味料の代用・グラム換算・レシピ人数分を一発変換</title>
+    <meta name="description" content="料理中の「アレがない！」「はかりがない！」をスマホで一発解決。甜麺醤やオイスターソースなどの代用レシピ計算、グラムから大さじへの換算、レシピの人数分一括変換、電子レンジのワット数計算がすべて無料で使えるお役立ちツールです。">
+    
+    <meta property="og:title" content="【無料】パパッと料理・計算ツール">
+    <meta property="og:description" content="調味料の代用からグラム換算、レシピの人数変換まで。料理のパニックを救う無料ツール！">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pomesaku.github.io/CookingTool/">
+    <meta name="twitter:card" content="summary">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#e65100">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <script>
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); }); }
+    </script>
+
+    <style>
+        body { font-family: "Hiragino Maru Gothic ProN", "Meiryo", sans-serif; background: #fffaf0; color: #4a3b32; max-width: 600px; margin: 0 auto; padding: 15px; }
+        h1 { font-size: 1.3rem; text-align: center; color: #e65100; margin-bottom: 5px;}
+        p.subtitle { text-align: center; font-size: 0.85rem; color: #8d6e63; margin-bottom: 15px; }
+        .bookmark-notice { text-align: center; font-size: 0.85rem; font-weight: bold; color: #0056b3; background: #e8f4fd; padding: 8px; border-radius: 4px; margin-bottom: 20px;}
+        
+        .tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 15px; }
+        .tab-btn { flex: 1 1 45%; padding: 12px 5px; background: #ffe0b2; border: none; border-radius: 8px 8px 0 0; font-size: 0.9rem; font-weight: bold; color: #d84315; cursor: pointer; transition: 0.2s; text-align: center;}
+        .tab-btn.active { background: #e65100; color: white; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
+        
+        .tab-content { display: none; background: #fff; padding: 20px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 2px solid #e65100; margin-bottom: 20px;}
+        .tab-content.active { display: block; }
+        
+        label { font-weight: bold; font-size: 0.95rem; color: #5d4037; display: block; margin-bottom: 8px;}
+        select, input[type="number"], textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #ffcc80; border-radius: 8px; font-size: 16px; box-sizing: border-box; background: #fff8e1; color: #3e2723; font-weight: bold;}
+        textarea { height: 120px; resize: vertical; line-height: 1.5; font-weight: normal;}
+        select:focus, input:focus, textarea:focus { border-color: #ff9800; outline: none; }
+        
+        .unit-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
+        .unit-toggle button { flex: 1; padding: 10px; background: #eeeeee; border: 2px solid #ddd; border-radius: 8px; font-size: 15px; color: #777; font-weight: bold; cursor: pointer;}
+        .unit-toggle button.active { background: #ff9800; color: white; border-color: #ff9800; }
+        
+        .calc-btn { background: #e65100; color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #bf360c; margin-bottom: 10px;}
+        .calc-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        .result-box { display: none; background: #fff3e0; padding: 15px; border-radius: 8px; border: 2px dashed #ffb74d; margin-top: 15px; }
+        .result-box h2 { font-size: 1.1rem; color: #e65100; margin-top: 0; text-align: center; border-bottom: 1px solid #ffcc80; padding-bottom: 8px;}
+        
+        ul.recipe-list { list-style: none; padding: 0; margin: 0; font-size: 1rem; color: #3e2723;}
+        ul.recipe-list li { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #ffcc80; }
+        ul.recipe-list li:last-child { border-bottom: none; }
+        .amount-highlight { font-weight: bold; color: #d84315; font-size: 1.2rem; }
+        .flex-row { display: flex; gap: 10px; align-items: center; margin-bottom: 15px;}
+        .flex-row input { margin-bottom: 0; }
+        optgroup { font-weight: bold; color: #e65100; background: #fffaf0;}
+
+        /* --- 広告用CSS --- */
+        .ad-box { margin-top: 25px; padding: 15px; background: #fdfbf2; border: 2px dashed #e6c86e; border-radius: 8px; text-align: center; }
+        .ad-copy { font-size: 0.95rem; color: #d84315; font-weight: bold; margin-top: 0; margin-bottom: 10px; }
+        
+        /* DMMボタン化 */
+        .dmm-btn a { display: block; background: #ff9800; color: white; padding: 14px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 0 #e65100; transition: 0.2s; }
+        .dmm-btn a:active { transform: translateY(4px); box-shadow: none; }
+        
+        /* バナー画像のはみ出し防止 */
+        .ad-banner { overflow: hidden; margin-top: 10px; }
+        .ad-banner a { display: block; width: 100%; height: auto; }
+        .ad-banner img { max-width: 100%; height: auto !important; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: block; margin: 0 auto; }
+
+        /* SEOテキスト用CSS */
+        .seo-text { max-width: 600px; margin: 30px auto 10px; padding: 20px; color: #666; font-size: 0.85rem; border-top: 1px solid #ddd; line-height: 1.6;}
+        .seo-text h2 { font-size: 1rem; color: #444; margin-bottom: 10px;}
+        .seo-text strong { color: #d84315; }
+    </style>
+</head>
+<body>
+    <h1>🍳 料理のパニック救済ツール</h1>
+    <p class="subtitle">家事の「困った！」をスマホで一発解決</p>
+
+    <div class="bookmark-notice">
+        ⭐ キッチンの必需品！このページを「ブックマーク」しておいてください。
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('tab-sub')">① 代用計算</button>
+        <button class="tab-btn" onclick="switchTab('tab-scale')">② 人数分変換</button>
+        <button class="tab-btn" onclick="switchTab('tab-gram')">③ グラム換算</button>
+        <button class="tab-btn" onclick="switchTab('tab-watt')">④ レンジW変換</button>
+    </div>
+
+    <div id="tab-sub" class="tab-content active">
+        <label>足りない調味料は？</label>
+        <select id="sub-item">
+            <option value="pancake">🥞 ホットケーキミックス</option>
+            <optgroup label="【中華・韓国・エスニック】">
+                <option value="tenmenjan">甜麺醤（テンメンジャン）</option>
+                <option value="doubanjiang">豆板醤（トウバンジャン）</option>
+                <option value="gochujang">コチュジャン</option>
+                <option value="oyster">オイスターソース</option>
+                <option value="rayu">ラー油</option>
+                <option value="nampla">ナンプラー</option>
+                <option value="sweetchili">スイートチリソース</option>
+            </optgroup>
+            <optgroup label="【洋風ソース・スープ】">
+                <option value="demiglace">デミグラスソース</option>
+                <option value="balsamic">バルサミコ酢</option>
+                <option value="consomme">コンソメ（固形・顆粒）</option>
+                <option value="torigara">鶏ガラスープの素</option>
+                <option value="worcester">ウスターソース</option>
+                <option value="chuno">中濃ソース</option>
+                <option value="thousand">サウザンアイランドドレッシング</option>
+                <option value="tartar">タルタルソース</option>
+                <option value="mustard">粒マスタード</option>
+            </optgroup>
+            <optgroup label="【和風だれ・ソース】">
+                <option value="mirin">みりん</option>
+                <option value="shirodashi">白だし</option>
+                <option value="mentsuyu3">めんつゆ（3倍濃縮）</option>
+                <option value="sushizu">すし酢</option>
+                <option value="ponzu">ポン酢</option>
+                <option value="yakiniku">焼肉のタレ</option>
+                <option value="nerigoma">練り胡麻（ねりごま）</option>
+            </optgroup>
+        </select>
+        <label>作りたい量は？</label>
+        <div class="unit-toggle">
+            <button id="btn-g" class="active" onclick="setSubUnit('g')">グラム(g)</button>
+            <button id="btn-tbsp" onclick="setSubUnit('tbsp')">大さじ</button>
+            <button id="btn-tsp" onclick="setSubUnit('tsp')">小さじ</button>
+        </div>
+        <input type="number" id="sub-amount" value="100" step="10" min="0.5">
+        <button class="calc-btn" onclick="calcSubstitute()">代用レシピを見る</button>
+        <div class="result-box" id="sub-result">
+            <h2>混ぜ合わせる黄金比</h2>
+            <ul class="recipe-list" id="recipe-list"></ul>
+        </div>
+    </div>
+
+    <div id="tab-scale" class="tab-content">
+        <label>元のレシピは何人前？</label>
+        <div class="flex-row">
+            <input type="number" id="scale-current" value="2" min="1"> <span style="font-weight:bold; color:#5d4037;">人前</span>
+        </div>
+        <label>何人前に変換したい？</label>
+        <div class="flex-row">
+            <input type="number" id="scale-target" value="5" min="1"> <span style="font-weight:bold; color:#5d4037;">人前</span>
+        </div>
+        <label>材料をペースト</label>
+        <p style="font-size:0.75rem; color:#888; margin-top:0;">※「1口大」などの数字も変換されることがあるのでご注意ください</p>
+        <textarea id="scale-text" placeholder="例:&#10;豚ひき肉 150g&#10;豆腐 1丁&#10;醤油 大さじ 1.5"></textarea>
+        <button class="calc-btn" onclick="calcScale()">一括で分量を変換する</button>
+        <div class="result-box" id="scale-result-box">
+            <h2>変換結果</h2>
+            <div id="scale-result-text" style="line-height: 1.6; color:#d84315; font-weight:bold; font-size:1.1rem;"></div>
+        </div>
+    </div>
+
+    <div id="tab-gram" class="tab-content">
+        <label>はかりたい材料は？</label>
+        <select id="gram-item">
+            <option value="15">水・酒・醤油・ケチャップ（大さじ1＝15g）</option>
+            <option value="9">砂糖・小麦粉（大さじ1＝9g）</option>
+            <option value="18">塩（大さじ1＝18g）</option>
+            <option value="12">油・バター（大さじ1＝12g）</option>
+        </select>
+        <label>レシピに書いてあるグラム(g)は？</label>
+        <input type="number" id="gram-amount" placeholder="例: 30" min="1">
+        <button class="calc-btn" onclick="calcGram()">大さじ何杯か計算する</button>
+        <div class="result-box" id="gram-result-box" style="text-align:center;">
+            <h2>計量スプーンの目安</h2>
+            <div id="gram-main-result" class="amount-highlight" style="font-size:1.5rem; margin:10px 0;"></div>
+            <div id="gram-sub-result" style="font-size:0.9rem; color:#8d6e63;"></div>
+        </div>
+    </div>
+
+    <div id="tab-watt" class="tab-content">
+        <label>レシピのW(ワット)数は？</label>
+        <select id="watt-current">
+            <option value="500">500W</option>
+            <option value="600" selected>600W</option>
+            <option value="1000">1000W</option>
+        </select>
+        <label>レシピの加熱時間は？</label>
+        <div class="flex-row">
+            <input type="number" id="time-min" value="3" min="0"> 分 
+            <input type="number" id="time-sec" value="0" min="0" max="59"> 秒
+        </div>
+        <label>あなたのレンジのW数は？</label>
+        <select id="watt-target">
+            <option value="500" selected>500W</option>
+            <option value="600">600W</option>
+            <option value="800">800W</option>
+            <option value="1000">1000W</option>
+        </select>
+        <button class="calc-btn" onclick="calcWatt()">加熱時間を計算する</button>
+        <div class="result-box" id="watt-result-box" style="text-align:center;">
+            <h2>あなたのレンジでの加熱時間</h2>
+            <div id="watt-main-result" class="amount-highlight" style="font-size:1.8rem; margin:10px 0;"></div>
+        </div>
+
+        <div class="ad-box" style="margin-top: 20px; border-color: #bee5eb; background: #f2f9fa;">
+            <p class="ad-copy" style="color: #0c5460;">👇 チンしている間の暇つぶしに最適</p>
+            <div class="dmm-btn">
+                <a href="https://px.a8.net/svt/ejp?a8mat=4AXFOH+C8KSFM+2GMK+ZQ80I" rel="nofollow">1冊115円のDMMコミックレンタル！</a>
+                <img border="0" width="1" height="1" src="https://www12.a8.net/0.gif?a8mat=4AXFOH+C8KSFM+2GMK+ZQ80I" alt="">
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 2px dashed #ddd;">
+        
+        <div class="ad-box" style="margin-top: 0; background: #fff; border: 1px solid #eee;">
+            <p class="ad-copy" style="color: #2e7d32;">🛒 もう今日の料理ラクしたい…という日はコレ</p>
+            <div class="ad-banner">
+                <a href="https://px.a8.net/svt/ejp?a8mat=4AXGGG+F6JY42+3RK+4MRQ9D" rel="nofollow">
+                <img border="0" width="234" height="60" alt="" src="https://www24.a8.net/svt/bgt?aid=260221840918&wid=001&eno=01&mid=s00000000488028011000&mc=1"></a>
+                <img border="0" width="1" height="1" src="https://www17.a8.net/0.gif?a8mat=4AXGGG+F6JY42+3RK+4MRQ9D" alt="">
+            </div>
+        </div>
+
+        <div class="ad-box" style="background: #fff; border: 1px solid #eee;">
+            <p class="ad-copy" style="color: #c62828;">🍱 毎日の献立作りや、ご高齢のご家族のお食事に</p>
+            <div class="ad-banner">
+                <a href="https://px.a8.net/svt/ejp?a8mat=4AXGGG+FRE4AA+5E7E+5YZ75" rel="nofollow">
+                <img border="0" width="300" height="250" alt="" src="https://www23.a8.net/svt/bgt?aid=260221840953&wid=001&eno=01&mid=s00000025169001003000&mc=1"></a>
+                <img border="0" width="1" height="1" src="https://www11.a8.net/0.gif?a8mat=4AXGGG+FRE4AA+5E7E+5YZ75" alt="">
+            </div>
+        </div>
+    </div>
+
+    <div class="seo-text">
+        <h2>💡 この「料理・計算ツール」について</h2>
+        <p>当サイトは、毎日の自炊や料理中に発生する「ちょっと困った」をスマホで瞬時に解決するための無料Webアプリです。</p>
+        <p><strong>① 調味料の代用計算：</strong>甜麺醤、豆板醤、オイスターソースなど、わざわざ買いたくない・切らしてしまった調味料を、家にある基本的な調味料（味噌、醤油、砂糖など）の黄金比で代用・作成できます。<br>
+        <strong>② 人数分の一括変換：</strong>「2人前」のレシピを「5人前」で作る時など、材料の分量をワンタップで一括計算します。<br>
+        <strong>③ グラム↔大さじ換算：</strong>キッチンスケール（はかり）がない時でも、水、砂糖、塩などのグラム数から「大さじ・小さじ何杯か」を正確に割り出します。<br>
+        <strong>④ レンジのワット数（W）変換：</strong>レシピの加熱時間（500Wや600W）をご自宅の電子レンジのワット数に合わせて秒単位で自動計算します。</p>
+        <p>主婦の方や一人暮らしの自炊のお供として、面倒な計算なしでサクサクお使いいただけます。ぜひブックマーク（お気に入り登録）して毎日のクッキングにお役立てください。</p>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // --- 1. 代用計算 ---
+        let currentSubUnit = 'g'; 
+        function setSubUnit(unit) {
+            currentSubUnit = unit;
+            document.getElementById('btn-g').classList.remove('active');
+            document.getElementById('btn-tbsp').classList.remove('active');
+            document.getElementById('btn-tsp').classList.remove('active');
+            document.getElementById(`btn-${unit}`).classList.add('active');
+
+            const amountInput = document.getElementById('sub-amount');
+            if (unit === 'g') {
+                amountInput.value = 100;
+                amountInput.step = 10;
+            } else {
+                amountInput.value = 1;
+                amountInput.step = 0.5;
+            }
+            document.getElementById('sub-result').style.display = 'none';
+        }
+        
+        const recipes = {
+            'pancake': [{name: '薄力粉', ratio: 0.8}, {name: '砂糖', ratio: 0.15}, {name: 'ベーキングパウダー', ratio: 0.05}],
+            'tenmenjan': [{name: '味噌', ratio: 0.5}, {name: '醤油', ratio: 0.25}, {name: '砂糖', ratio: 0.25}],
+            'doubanjiang': [{name: '味噌', ratio: 0.5}, {name: '醤油', ratio: 0.25}, {name: '一味唐辛子', ratio: 0.1}, {name: 'ごま油', ratio: 0.15}],
+            'gochujang': [{name: '味噌', ratio: 0.4}, {name: '醤油', ratio: 0.2}, {name: '砂糖', ratio: 0.2}, {name: '一味唐辛子', ratio: 0.1}, {name: 'ごま油', ratio: 0.1}],
+            'oyster': [{name: '醤油', ratio: 0.5}, {name: '砂糖(またはハチミツ)', ratio: 0.4}, {name: '鶏ガラスープの素', ratio: 0.1}],
+            'rayu': [{name: 'ごま油', ratio: 0.9}, {name: '一味唐辛子', ratio: 0.1}],
+            'nampla': [{name: '醤油', ratio: 0.5}, {name: 'レモン汁', ratio: 0.3}, {name: '鶏ガラスープの素', ratio: 0.2}],
+            'sweetchili': [{name: '酢', ratio: 0.4}, {name: '砂糖', ratio: 0.4}, {name: '豆板醤(または一味)', ratio: 0.1}, {name: 'すりおろしニンニク', ratio: 0.1}],
+            'demiglace': [{name: 'ケチャップ', ratio: 0.4}, {name: '中濃ソース', ratio: 0.4}, {name: 'バター', ratio: 0.2}],
+            'balsamic': [{name: '酢', ratio: 0.5}, {name: 'ウスターソース', ratio: 0.5}],
+            'consomme': [{name: '鶏ガラスープの素', ratio: 0.8}, {name: '塩こしょう', ratio: 0.2}],
+            'torigara': [{name: 'コンソメ', ratio: 0.8}, {name: 'ごま油', ratio: 0.2}],
+            'worcester': [{name: '中濃ソース', ratio: 0.7}, {name: '醤油', ratio: 0.3}],
+            'chuno': [{name: 'ウスターソース', ratio: 0.5}, {name: 'ケチャップ', ratio: 0.5}],
+            'thousand': [{name: 'マヨネーズ', ratio: 0.5}, {name: 'ケチャップ', ratio: 0.5}],
+            'tartar': [{name: 'マヨネーズ', ratio: 0.6}, {name: 'ゆで卵(みじん切り)', ratio: 0.3}, {name: '酢', ratio: 0.1}],
+            'mustard': [{name: '和辛子(チューブ)', ratio: 0.5}, {name: '酢', ratio: 0.5}],
+            'mirin': [{name: '酒', ratio: 0.7}, {name: '砂糖', ratio: 0.3}],
+            'shirodashi': [{name: '水', ratio: 0.5}, {name: '醤油', ratio: 0.2}, {name: 'みりん', ratio: 0.2}, {name: '和風だしの素', ratio: 0.1}],
+            'mentsuyu3': [{name: '醤油', ratio: 0.4}, {name: 'みりん', ratio: 0.4}, {name: '粉末和風だし', ratio: 0.2}],
+            'sushizu': [{name: '酢', ratio: 0.6}, {name: '砂糖', ratio: 0.3}, {name: '塩', ratio: 0.1}],
+            'ponzu': [{name: '醤油', ratio: 0.5}, {name: '酢', ratio: 0.5}],
+            'yakiniku': [{name: '醤油', ratio: 0.5}, {name: '砂糖', ratio: 0.25}, {name: 'ごま油', ratio: 0.125}, {name: 'ニンニク(チューブ)', ratio: 0.125}],
+            'nerigoma': [{name: 'すりごま', ratio: 0.6}, {name: 'ごま油', ratio: 0.4}]
+        };
+
+        function calcSubstitute() {
+            const item = document.getElementById('sub-item').value;
+            const amount = parseFloat(document.getElementById('sub-amount').value);
+            if (!amount) return;
+            let unitLabel = currentSubUnit === 'g' ? 'g' : (currentSubUnit === 'tbsp' ? '大さじ' : '小さじ');
+            let listHTML = '';
+            recipes[item].forEach(ing => {
+                let calcAmount = amount * ing.ratio;
+                if(calcAmount > 0) {
+                    let displayNum = (Math.round(calcAmount * 10) / 10).toString();
+                    let displayAmount = currentSubUnit === 'g' ? `<span class="amount-highlight">${displayNum}</span> ${unitLabel}` : `${unitLabel} <span class="amount-highlight">${displayNum}</span>`;
+                    listHTML += `<li><span>${ing.name}</span> <span>${displayAmount}</span></li>`;
+                }
+            });
+            document.getElementById('recipe-list').innerHTML = listHTML;
+            document.getElementById('sub-result').style.display = 'block';
+        }
+
+        // --- 2. 人数分の一括変換 ---
+        function calcScale() {
+            const current = parseFloat(document.getElementById('scale-current').value);
+            const target = parseFloat(document.getElementById('scale-target').value);
+            const text = document.getElementById('scale-text').value;
+            if (!current || !target || !text) return;
+            
+            const multiplier = target / current;
+            const resultText = text.replace(/\d+(\.\d+)?/g, (match) => {
+                let num = parseFloat(match) * multiplier;
+                return Math.round(num * 10) / 10;
+            });
+            
+            document.getElementById('scale-result-text').innerHTML = resultText.replace(/\n/g, '<br>');
+            document.getElementById('scale-result-box').style.display = 'block';
+        }
+
+        // --- 3. グラム換算 ---
+        function calcGram() {
+            const gramPerTbsp = parseFloat(document.getElementById('gram-item').value);
+            const targetGram = parseFloat(document.getElementById('gram-amount').value);
+            if (!targetGram) return;
+            let tbspAmount = targetGram / gramPerTbsp;
+            let tspAmount = tbspAmount * 3;
+            document.getElementById('gram-main-result').innerHTML = `大さじ ${Math.round(tbspAmount * 10) / 10} 杯`;
+            document.getElementById('gram-sub-result').innerText = `(小さじなら約 ${Math.round(tspAmount * 10) / 10} 杯)`;
+            document.getElementById('gram-result-box').style.display = 'block';
+        }
+
+        // --- 4. ワット数変換 ---
+        function calcWatt() {
+            const currentW = parseFloat(document.getElementById('watt-current').value);
+            const targetW = parseFloat(document.getElementById('watt-target').value);
+            const min = parseFloat(document.getElementById('time-min').value) || 0;
+            const sec = parseFloat(document.getElementById('time-sec').value) || 0;
+            
+            const totalSec = (min * 60) + sec;
+            if (totalSec <= 0) return;
+
+            const newTotalSec = Math.round(totalSec * (currentW / targetW));
+            const newMin = Math.floor(newTotalSec / 60);
+            const newSec = newTotalSec % 60;
+            
+            let resultText = "";
+            if (newMin > 0) resultText += `${newMin} 分 `;
+            resultText += `${newSec} 秒`;
+
+            document.getElementById('watt-main-result').innerText = resultText;
+            document.getElementById('watt-result-box').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+

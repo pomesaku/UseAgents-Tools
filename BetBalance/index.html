@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>【無料】資金配分計算ツール｜競馬の3連単多点買い・コピペで一発最適化</title>
+    <meta name="description" content="netkeibaやJRAのオッズ表をそのままコピペするだけ！3連単フォーメーションなど買い目が多い時の資金配分を、どの目が来ても利益が同じになるよう一瞬で自動計算する完全無料のWebアプリです。">
+    
+    <meta property="og:title" content="【無料】秒速・資金配分計算ツール">
+    <meta property="og:description" content="オッズをコピペするだけで一発計算！発走3分前のパニックを救う神ツール">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pomesaku.github.io/BetBalance/">
+    <meta name="twitter:card" content="summary">
+
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f7f6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        h1 { font-size: 1.3rem; text-align: center; color: #d32f2f; margin-bottom: 5px;}
+        p.subtitle { text-align: center; font-size: 0.85rem; color: #666; margin-bottom: 10px; }
+        .bookmark-notice { text-align: center; font-size: 0.85rem; font-weight: bold; color: #0056b3; background: #e8f4fd; padding: 8px; border-radius: 4px; margin-bottom: 20px;}
+        
+        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;}
+        label { font-weight: bold; font-size: 0.95rem; color: #444; display: block; margin-bottom: 5px;}
+        input[type="number"] { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 6px; font-size: 18px; box-sizing: border-box; background: #fafafa; font-weight: bold;}
+        textarea { width: 100%; height: 160px; padding: 12px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 6px; font-size: 15px; box-sizing: border-box; background: #fafafa; resize: vertical; line-height: 1.5; color: #333;}
+        textarea::placeholder { color: #999; }
+        textarea:focus, input[type="number"]:focus { border-color: #d32f2f; outline: none; }
+        button.calc-btn { background: #d32f2f; color: white; border: none; padding: 16px; width: 100%; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 0 #b71c1c;}
+        button.calc-btn:active { transform: translateY(4px); box-shadow: none; }
+        .notice { font-size: 0.8rem; color: #d32f2f; margin-bottom: 15px; font-weight: bold;}
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.95rem;}
+        th, td { padding: 10px 5px; text-align: right; border-bottom: 1px solid #ddd; }
+        th { background: #f8f8f8; color: #555; font-weight: normal; font-size: 0.85rem;}
+        td.bet-name { text-align: left; font-weight: bold; color: #555; font-size: 0.9rem;}
+        td.buy-amount { color: #d32f2f; font-weight: bold; font-size: 1.1rem;}
+        .summary { display: flex; justify-content: space-between; background: #fff3f3; padding: 15px; border-radius: 6px; border: 1px solid #ffcdd2; margin-bottom: 15px;}
+        .summary div { text-align: center; }
+        .summary span { display: block; font-size: 1.3rem; font-weight: bold; color: #d32f2f; margin-top: 5px;}
+        
+        /* 広告用CSS */
+        .ad-box { margin-top: 25px; padding: 15px; background: #fdfbf2; border: 2px dashed #e6c86e; border-radius: 8px; text-align: center; }
+        .ad-copy { font-size: 0.9rem; color: #947100; font-weight: bold; margin-top: 0; margin-bottom: 10px; }
+        .dmm-btn a { display: block; background: #ff9800; color: white; padding: 14px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 0 #e65100; transition: 0.2s; }
+        .dmm-btn a:active { transform: translateY(4px); box-shadow: none; }
+        .abema-banner { overflow: hidden; }
+        .abema-banner a { display: block; width: 100%; height: auto; }
+        .abema-banner img { max-width: 100%; height: auto !important; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: block; margin: 0 auto; }
+        
+        /* SEOテキスト用CSS */
+        .seo-text { max-width: 600px; margin: 40px auto; padding: 20px; color: #666; font-size: 0.85rem; border-top: 1px solid #ddd; line-height: 1.6;}
+        .seo-text h2 { font-size: 1rem; color: #444; margin-bottom: 10px;}
+    </style>
+</head>
+<body>
+    <h1>🔥 秒速・資金配分ツール</h1>
+    <p class="subtitle">オッズをコピペするだけで一瞬で最適化</p>
+    
+    <div class="bookmark-notice">
+        ⭐ 毎週末すぐ使えるように、このページを「ブックマーク」しておいてください！
+    </div>
+    
+    <div class="card">
+        <label>総予算 (円):</label>
+        <input type="number" id="budget" value="10000" step="100">
+        
+        <label>オッズ表をそのままペースト:</label>
+        <p style="font-size:0.8rem; color:#666; margin-top:0;">※買い目とオッズを自動で判別します。</p>
+        <textarea id="bulk-odds" placeholder="【入力例】&#10;1-2-3 150.5倍&#10;2-4-1 49&#10;単勝 7 4.5倍"></textarea>
+        
+        <p class="notice" id="save-notice">✔️ 入力内容は自動保存されています</p>
+        <button class="calc-btn" onclick="calculate()">一発計算 (抽出＆配分)</button>
+
+        <div class="ad-box">
+            <p class="ad-copy">👇 次のレースまでの暇つぶしに</p>
+            <div class="dmm-btn">
+                <a href="https://px.a8.net/svt/ejp?a8mat=4AXFOH+C8KSFM+2GMK+ZQ80I" rel="nofollow">1冊115円のDMMコミックレンタル！</a>
+                <img border="0" width="1" height="1" src="https://www12.a8.net/0.gif?a8mat=4AXFOH+C8KSFM+2GMK+ZQ80I" alt="">
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="result-card" style="display:none;">
+        <div class="summary">
+            <div>実際の購入額<br><span id="actual-total">0</span></div>
+            <div>平均払戻見込<br><span id="avg-return">0</span></div>
+        </div>
+        <table id="result-table">
+            </table>
+
+        <div class="ad-box abema-banner" style="margin-top: 20px; border-color: #bee5eb; background: #f2f9fa;">
+            <p class="ad-copy" style="color: #0c5460;">📺 今すぐレース中継・ギャンブル番組を見るなら</p>
+            <a href="https://px.a8.net/svt/ejp?a8mat=4AXFOH+C7DX82+4EKC+62MDD" rel="nofollow">
+            <img border="0" width="600" height="94" alt="" src="https://www21.a8.net/svt/bgt?aid=260220833738&wid=001&eno=01&mid=s00000020550001020000&mc=1"></a>
+            <img border="0" width="1" height="1" src="https://www12.a8.net/0.gif?a8mat=4AXFOH+C7DX82+4EKC+62MDD" alt="">
+        </div>
+    </div>
+
+    <div class="seo-text">
+        <h2>💡 このツールについて（3連単・フォーメーション対応）</h2>
+        <p>当サイトは、競馬における「多点買い」の資金配分を極限まで効率化する無料の資金計算機（トリガミ防止ツール）です。</p>
+        <p>特に3連単のフォーメーションや馬連の多点買いなど、買い目が30点〜60点を超える場合、発走直前にオッズを見ながら手動で予算を割り振るのは不可能です。本ツールなら、netkeibaやJRAの出馬表・オッズ画面をコピーして貼り付ける（コピペする）だけで、システムが自動でオッズを抽出し、指定した予算内で「どの買い目が的中しても、ほぼ同じ利益（払戻金）になる」ように100円単位で最適な購入額を瞬時に割り出します。</p>
+        <p>面倒なエクセル（Excel）での管理や、複雑な計算式は一切不要です。スマホブラウザでサクサク動くため、競馬場やWINSでの直前予想に最適です。</p>
+    </div>
+
+    <script>
+        const budgetInput = document.getElementById('budget');
+        const bulkOddsInput = document.getElementById('bulk-odds');
+
+        window.onload = () => {
+            if(localStorage.getItem('savedBudget')) budgetInput.value = localStorage.getItem('savedBudget');
+            if(localStorage.getItem('savedOdds')) bulkOddsInput.value = localStorage.getItem('savedOdds');
+        };
+
+        budgetInput.addEventListener('input', () => localStorage.setItem('savedBudget', budgetInput.value));
+        bulkOddsInput.addEventListener('input', () => localStorage.setItem('savedOdds', bulkOddsInput.value));
+
+        function calculate() {
+            const budget = parseFloat(budgetInput.value);
+            const rawText = bulkOddsInput.value;
+
+            if (!rawText || !budget) {
+                alert("予算とオッズを入力してください。");
+                return;
+            }
+
+            let betsList = [];
+            const lines = rawText.split('\n');
+            
+            lines.forEach(line => {
+                if (!line.trim()) return;
+
+                let cleanLine = line.replace(/\d+(-\d+)+/g, ' ');
+                cleanLine = cleanLine.replace(/[\(\[\<]\d+[\)\]\>]/g, ' ');
+                const matches = cleanLine.match(/\d+(?:\.\d+)?/g);
+                
+                if (matches) {
+                    const oddsStr = matches[matches.length - 1];
+                    const extractedOdds = parseFloat(oddsStr);
+                    
+                    if(extractedOdds > 0) {
+                        let lastIndex = line.lastIndexOf(oddsStr);
+                        let betName = line;
+                        if (lastIndex !== -1) {
+                            betName = line.substring(0, lastIndex) + line.substring(lastIndex + oddsStr.length);
+                        }
+                        betName = betName.replace(/倍/g, '').replace(/円/g, '').trim();
+                        if (!betName) betName = "指定なし";
+
+                        betsList.push({ name: betName, odds: extractedOdds });
+                    }
+                }
+            });
+
+            if (betsList.length === 0) {
+                alert("オッズが見つかりません。");
+                return;
+            }
+
+            betsList.sort((a, b) => b.odds - a.odds);
+            
+            let sumInverse = 0;
+            betsList.forEach(bet => { sumInverse += (1 / bet.odds); });
+
+            const targetReturn = budget / sumInverse;
+            let tableHTML = '<tr><th style="text-align:left;">買い目</th><th>オッズ</th><th>購入額(円)</th><th>払戻見込</th></tr>';
+            let actualTotal = 0;
+            let totalReturn = 0;
+
+            betsList.forEach(bet => {
+                let rawStake = targetReturn / bet.odds;
+                let stake = Math.round(rawStake / 100) * 100;
+                if(stake === 0) stake = 100; 
+                
+                actualTotal += stake;
+                let expectedReturn = Math.floor(stake * bet.odds);
+                totalReturn += expectedReturn;
+                
+                tableHTML += `<tr>
+                    <td class="bet-name">${bet.name}</td>
+                    <td>${bet.odds}</td>
+                    <td class="buy-amount">${stake.toLocaleString()}</td>
+                    <td>${expectedReturn.toLocaleString()}</td>
+                </tr>`;
+            });
+
+            document.getElementById('actual-total').innerText = actualTotal.toLocaleString() + "円";
+            document.getElementById('avg-return').innerText = Math.floor(totalReturn / betsList.length).toLocaleString() + "円";
+            document.getElementById('result-table').innerHTML = tableHTML;
+            document.getElementById('result-card').style.display = 'block';
+            document.getElementById('result-card').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

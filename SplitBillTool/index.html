@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>【無料】神・割り勘ツール｜上司多め・遅刻・合コンの不平等な支払いを一発計算</title>
+    <meta name="description" content="飲み会や合コン、ドライブでの「ちょっと複雑な割り勘」をスマホで一発計算。多めに払う人、少なめでいい人を比率で分け、100円・500円・1000円単位でキリ良く丸めて集金額を算出します。幹事さん必携の無料ツール。">
+    
+    <meta property="og:title" content="【無料】神・割り勘ツール｜複雑な支払いを一発計算">
+    <meta property="og:description" content="上司多め、遅刻組は少なめ、運転手は無料…面倒な計算を100円単位でキリ良く一発算出！">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://あなたのGitHubのURL/SplitBillTool/">
+    <meta name="twitter:card" content="summary">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1565c0">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <script>
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
+    </script>
+
+    <style>
+        body { font-family: "Hiragino Maru Gothic ProN", "Meiryo", sans-serif; background: #f0f4f8; color: #333; max-width: 600px; margin: 0 auto; padding: 15px; }
+        h1 { font-size: 1.4rem; text-align: center; color: #1565c0; margin-bottom: 5px;}
+        p.subtitle { text-align: center; font-size: 0.85rem; color: #546e7a; margin-bottom: 15px; }
+        
+        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 4px solid #1565c0;}
+        
+        label { font-weight: bold; font-size: 0.95rem; color: #1e88e5; display: block; margin-bottom: 8px;}
+        input[type="number"], select, input[type="text"] { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #bbdefb; border-radius: 8px; font-size: 16px; box-sizing: border-box; background: #f8fbff; color: #0d47a1; font-weight: bold;}
+        input:focus, select:focus { border-color: #1e88e5; outline: none; }
+        
+        .group-box { background: #f1f8e9; padding: 15px; border-radius: 8px; border: 1px solid #c5e1a5; margin-bottom: 15px; }
+        .group-box.g2 { background: #fff3e0; border-color: #ffcc80; }
+        .group-box.g3 { background: #ffebee; border-color: #ef9a9a; }
+        .group-title { font-size: 1rem; font-weight: bold; margin-top: 0; margin-bottom: 10px; color: #333;}
+        
+        .flex-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px;}
+        .flex-row > div { flex: 1; }
+        .flex-row input, .flex-row select { margin-bottom: 0; }
+
+        .calc-btn { background: #1565c0; color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #0d47a1; margin-bottom: 10px; transition: 0.2s;}
+        .calc-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        .result-box { display: none; background: #e3f2fd; padding: 20px; border-radius: 8px; border: 2px dashed #64b5f6; margin-top: 20px; }
+        .result-box h2 { font-size: 1.2rem; color: #1565c0; margin-top: 0; text-align: center; border-bottom: 1px solid #90caf9; padding-bottom: 10px;}
+        
+        ul.result-list { list-style: none; padding: 0; margin: 0; font-size: 1rem; color: #333;}
+        ul.result-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #90caf9; }
+        ul.result-list li:last-child { border-bottom: none; }
+        .amount-highlight { font-weight: bold; color: #d32f2f; font-size: 1.3rem; }
+        
+        /* --- 広告用CSS --- */
+        .ad-box { margin-top: 25px; padding: 15px; background: #fff; border: 1px solid #eee; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);}
+        .ad-copy { font-size: 0.9rem; color: #d84315; font-weight: bold; margin-top: 0; margin-bottom: 10px; }
+        .ad-banner img { max-width: 100%; height: auto !important; border-radius: 6px; }
+
+        /* SEOテキスト */
+        .seo-text { max-width: 600px; margin: 30px auto 10px; padding: 20px; color: #666; font-size: 0.85rem; border-top: 1px solid #ddd; line-height: 1.6;}
+    </style>
+</head>
+<body>
+    <h1>🍻 神・割り勘ツール</h1>
+    <p class="subtitle">上司・遅刻・運転手…不平等な支払いを一発計算</p>
+
+    <div class="card">
+        <label>お会計の総額は？</label>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <input type="number" id="total-amount" placeholder="例: 15400" min="0" style="font-size: 1.5rem; margin-bottom:0;">
+            <span style="font-weight:bold; font-size:1.2rem; color:#1565c0;">円</span>
+        </div>
+
+        <label style="margin-top:20px;">端数の丸め方（キリ良く集金）</label>
+        <select id="round-unit">
+            <option value="100">100円単位で計算</option>
+            <option value="500">500円単位で計算</option>
+            <option value="1000">1000円単位で計算</option>
+            <option value="1">1円単位で計算（きっちり）</option>
+        </select>
+    </div>
+
+    <div class="card" style="border-top-color:#81c784;">
+        <p style="font-size:0.85rem; color:#666; margin-top:0;">※人数が0人のグループは計算から除外されます</p>
+        
+        <div class="group-box">
+            <input type="text" id="g1-name" value="多めに払う人（上司・男性など）" class="group-title" style="background:transparent; border:none; border-bottom:1px solid #ccc; padding:5px 0; color:#2e7d32;">
+            <div class="flex-row">
+                <div>
+                    <label>人数</label>
+                    <input type="number" id="g1-count" value="1" min="0">
+                </div>
+                <div>
+                    <label>支払い比率</label>
+                    <select id="g1-weight">
+                        <option value="2.0">2.0倍（かなり多め）</option>
+                        <option value="1.5" selected>1.5倍（少し多め）</option>
+                        <option value="1.0">1.0倍（普通）</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="group-box g2">
+            <input type="text" id="g2-name" value="普通に払う人" class="group-title" style="background:transparent; border:none; border-bottom:1px solid #ccc; padding:5px 0; color:#e65100;">
+            <div class="flex-row">
+                <div>
+                    <label>人数</label>
+                    <input type="number" id="g2-count" value="3" min="0">
+                </div>
+                <div>
+                    <label>支払い比率</label>
+                    <select id="g2-weight">
+                        <option value="1.0" selected>1.0倍（基準）</option>
+                        <option value="0.8">0.8倍</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="group-box g3">
+            <input type="text" id="g3-name" value="少なくていい人（遅刻・運転手など）" class="group-title" style="background:transparent; border:none; border-bottom:1px solid #ccc; padding:5px 0; color:#c62828;">
+            <div class="flex-row">
+                <div>
+                    <label>人数</label>
+                    <input type="number" id="g3-count" value="0" min="0">
+                </div>
+                <div>
+                    <label>支払い比率</label>
+                    <select id="g3-weight">
+                        <option value="0.5" selected>0.5倍（半分）</option>
+                        <option value="0.3">0.3倍</option>
+                        <option value="0">無料（0円）</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <button class="calc-btn" onclick="calcSplit()">計算する</button>
+
+        <div class="result-box" id="result-box">
+            <h2>💰 1人あたりの集金額</h2>
+            <ul class="result-list" id="result-list"></ul>
+            <div id="result-diff" style="margin-top: 15px; text-align: center; font-weight: bold; font-size: 0.95rem;"></div>
+        </div>
+    </div>
+
+    <div class="ad-box">
+        <p class="ad-copy">🚗 次回の旅行やドライブの予約はお済みですか？</p>
+        <div class="ad-banner" style="margin-top: 10px;">
+            <a href="https://rpx.a8.net/svt/ejp?a8mat=4AXFOH+B43CUA+2HOM+6KESY&rakuten=y&a8ejpredirect=http%3A%2F%2Fhb.afl.rakuten.co.jp%2Fhgc%2F0eb4779e.5d30c5ba.0eb4779f.b871e4e3%2Fa26022081446_4AXFOH_B43CUA_2HOM_6KESY%3Fpc%3Dhttp%253A%252F%252Ftravel.rakuten.co.jp%252F%26m%3Dhttp%253A%252F%252Ftravel.rakuten.co.jp%252F" rel="nofollow" style="display:block; background:#ff9800; color:#fff; padding:15px; text-decoration:none; border-radius:8px; font-weight:bold; font-size: 1.1rem; box-shadow: 0 4px 0 #e65100; transition: 0.2s;">✈️ 旅行なら楽天トラベルでお得に予約</a>
+            <img border="0" width="1" height="1" src="https://www16.a8.net/0.gif?a8mat=4AXFOH+B43CUA+2HOM+6KESY" alt="">
+        </div>
+    </div>
+
+    <div class="ad-box" style="margin-top:15px;">
+        <p class="ad-copy">🥂 今日の飲み会、出会いがイマイチだったなら…</p>
+        <div class="ad-banner" style="margin-top: 10px;">
+             <a href="https://px.a8.net/svt/ejp?a8mat=4AXFOH+CM9RCI+22QA+NTJWY" rel="nofollow" style="display:block; background:#ec407a; color:#fff; padding:15px; text-decoration:none; border-radius:8px; font-weight:bold; font-size: 1.1rem; box-shadow: 0 4px 0 #c2185b; transition: 0.2s;">✨ 【Pappy】ワンランク上の出会いを探す</a>
+             <img border="0" width="1" height="1" src="https://www16.a8.net/0.gif?a8mat=4AXFOH+CM9RCI+22QA+NTJWY" alt="">
+        </div>
+    </div>
+
+    <div class="seo-text">
+        <h2>💡 神・割り勘ツールとは？</h2>
+        <p>職場の飲み会、男女の合コン、ドライブ・旅行など、人間関係が絡む「複雑な割り勘」を一瞬で計算する無料Webアプリです。上司や男性は「多め（1.5倍など）」、遅刻した人や運転手は「少なめ・無料」といった比率を設定し、会計時にモタつかないよう100円・500円・1000円単位でキリ良く丸めて算出します。幹事さんの負担をゼロにする便利ツールとしてぜひご活用ください。</p>
+    </div>
+
+    <script>
+        function calcSplit() {
+            const total = parseInt(document.getElementById('total-amount').value) || 0;
+            const unit = parseInt(document.getElementById('round-unit').value) || 100;
+
+            let groups = [];
+            for(let i=1; i<=3; i++) {
+                const count = parseInt(document.getElementById(`g${i}-count`).value) || 0;
+                const weight = parseFloat(document.getElementById(`g${i}-weight`).value) || 0;
+                const name = document.getElementById(`g${i}-name`).value || `グループ${i}`;
+                if(count > 0 && weight >= 0) { // weight 0 (無料)も許容
+                    groups.push({name, count, weight});
+                }
+            }
+
+            if(total <= 0 || groups.length === 0) return;
+
+            // 比率の合計を計算
+            const totalWeight = groups.reduce((sum, g) => sum + (g.count * g.weight), 0);
+            if(totalWeight === 0) return; // 全員無料の場合は計算不可
+
+            const baseAmount = total / totalWeight;
+            let collected = 0;
+            let resultHTML = '';
+
+            groups.forEach(g => {
+                if (g.weight === 0) {
+                    resultHTML += `
+                        <li>
+                            <span><strong>${g.name}</strong> (${g.count}人)</span>
+                            <span class="amount-highlight">0円 <span style="font-size:0.8rem; color:#666;">/人</span></span>
+                        </li>
+                    `;
+                } else {
+                    let rawAmount = baseAmount * g.weight;
+                    // 四捨五入でキリの良い数字に丸める
+                    let roundedAmount = Math.round(rawAmount / unit) * unit;
+                    collected += roundedAmount * g.count;
+
+                    resultHTML += `
+                        <li>
+                            <span><strong>${g.name}</strong> (${g.count}人)</span>
+                            <span class="amount-highlight">${roundedAmount.toLocaleString()}円 <span style="font-size:0.8rem; color:#666;">/人</span></span>
+                        </li>
+                    `;
+                }
+            });
+
+            // 幹事の精算（余りか不足か）
+            const diff = collected - total;
+            let diffHTML = '';
+            if (diff > 0) {
+                diffHTML = `<span style="color:#2e7d32;">※集金合計: ${collected.toLocaleString()}円<br>（幹事さんのお手元に ${diff.toLocaleString()}円 余ります）</span>`;
+            } else if (diff < 0) {
+                diffHTML = `<span style="color:#c62828;">※集金合計: ${collected.toLocaleString()}円<br>（⚠️ 幹事さんの支払いが ${Math.abs(diff).toLocaleString()}円 不足します）</span>`;
+            } else {
+                diffHTML = `<span style="color:#1565c0;">※集金合計: ${collected.toLocaleString()}円（ピッタリです！）</span>`;
+            }
+
+            document.getElementById('result-list').innerHTML = resultHTML;
+            document.getElementById('result-diff').innerHTML = diffHTML;
+            document.getElementById('result-box').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
