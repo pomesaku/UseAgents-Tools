@@ -24,13 +24,17 @@
         @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
         .result-box h2 { font-size: 1.2rem; color: #ff5252; margin-top: 0; margin-bottom: 15px;}
         .cost-time { font-size: 2.2rem; font-weight: bold; color: #ff5252; margin: 10px 0; line-height: 1.2;}
+        
+        /* ネタ画像エリア */
+        .despair-image { width: 100%; max-width: 300px; height: auto; border-radius: 8px; margin: 15px auto; display: block; border: 3px solid #ff5252; background: #111;}
+        
         .spicy-comment { background: #111; padding: 15px; border-radius: 8px; font-size: 0.95rem; line-height: 1.5; color: #eceff1; margin-bottom: 20px; border-left: 4px solid #ff5252;}
         
         .action-btns { display: flex; flex-direction: column; gap: 10px;}
         .stop-btn { background: #4caf50; color: white; border: none; padding: 16px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #2e7d32;}
         .buy-btn { background: transparent; color: #9e9e9e; border: 1px solid #757575; padding: 10px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; margin-top: 10px;}
         
-        /* 広告エリア（将来の転職エージェント用） */
+        /* 広告エリア */
         .ad-box { margin-top: 20px; padding: 15px; background: #fff; border: 1px dashed #b0bec5; border-radius: 8px; text-align: center;}
         .ad-copy { font-size: 0.9rem; color: #d84315; font-weight: bold; margin: 0 0 10px 0; }
     </style>
@@ -54,7 +58,9 @@
         <h2>⚠️ 警告</h2>
         <p style="margin:0; font-size:0.9rem;">それを手に入れるためには、あなたの労働時間が</p>
         <div class="cost-time" id="time-display">0時間 0分</div>
-        <p style="margin:0 0 15px 0; font-size:0.9rem;">奪われます。（約 <span id="days-display" style="font-weight:bold; font-size:1.2rem;">0</span> 日分の労働）</p>
+        <p style="margin:0 0 10px 0; font-size:0.9rem;">奪われます。（約 <span id="days-display" style="font-weight:bold; font-size:1.2rem;">0</span> 日分の労働）</p>
+
+        <img id="despair-img" class="despair-image" src="" alt="絶望の画像" style="display: none;">
 
         <div class="spicy-comment" id="spicy-comment"></div>
 
@@ -80,10 +86,7 @@
                 return;
             }
 
-            // 時給の計算（月160時間労働と仮定）
             const hourlyWage = salary / 160;
-            
-            // 必要な労働時間
             const totalHours = price / hourlyWage;
             const hours = Math.floor(totalHours);
             const minutes = Math.round((totalHours - hours) * 60);
@@ -92,17 +95,34 @@
             document.getElementById('time-display').innerText = `${hours}時間 ${minutes}分`;
             document.getElementById('days-display').innerText = workDays;
 
-            // 辛口コメントの分岐
             let comment = "";
-            if (totalHours < 1) {
+            let imgSrc = "";
+
+            // 絶望レベルによる分岐（テキストと画像）
+            if (totalHours <= 2) {
+                // レベル1：数時間（ちょっとした出費）
                 comment = "まあ、これくらいなら息抜きに買ってもバチは当たりません。日々の労働のささやかなご褒美ですね。";
-            } else if (totalHours < 8) {
-                comment = "丸1日、あの理不尽な会議や業務に耐えて稼いだお金が、この1タップで消え去ります。本当にそれだけの価値がありますか？";
-            } else if (totalHours < 40) {
+                imgSrc = "level1.png"; // ※余裕のある画像
+            } else if (totalHours <= 8) {
+                // レベル2：1日分（そこそこの痛手）
+                comment = "丸1日、あの理不尽な業務に耐えて稼いだお金が、この1タップで消え去ります。本当にそれだけの価値がありますか？";
+                imgSrc = "level2.png"; // ※疲労困憊の画像
+            } else if (totalHours <= 40) {
+                // レベル3：1週間分（かなりの絶望）
                 comment = "正気ですか？あなたの1週間分の血と汗と涙が吹き飛びます。一旦スマホを閉じて深呼吸し、本当に必要か3日考えましょう。";
+                imgSrc = "level3.png"; // ※天を仰いで絶望する画像
             } else {
-                comment = "【致命的警告】これはあなたの人生の貴重な数ヶ月分に相当します。これをポチる前に、まずは時給を上げるための転職活動をおすすめします。";
+                // レベル4：致命傷
+                comment = "【致命的警告】あなたの人生の貴重な数ヶ月分に相当します。これをポチる前に、まずは時給を上げるための転職活動をおすすめします。";
+                imgSrc = "level4.png"; // ※白骨化、または魂が抜けた画像
             }
+
+            // 画像とコメントのセット
+            const imgElement = document.getElementById('despair-img');
+            imgElement.src = imgSrc;
+            // 念のため画像が見つからない時は代替テキストが出るようにする
+            imgElement.alt = `絶望レベル画像: ${workDays}日分`; 
+            imgElement.style.display = 'block';
 
             document.getElementById('spicy-comment').innerText = comment;
             document.getElementById('result-box').style.display = 'block';
