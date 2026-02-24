@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>【無料】絶対遅刻しない！準備・起床タイム逆算メーカー</title>
+    <meta name="description" content="出発時間から逆算して「何時に起きればいいか」「何時から準備を始めればいいか」を分単位で自動計算する無料ツールです。お出かけ、デート、ライブ遠征の準備のお供に。">
+    
+    <meta property="og:title" content="【無料】絶対遅刻しない！準備・起床タイム逆算メーカー">
+    <meta property="og:description" content="電車の時間から「シャワー」「メイク」の時間を引いて、デッドラインを分単位で算出！">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pomesaku.github.io/UseAgents-Tools/ReverseTimer/">
+    <meta name="twitter:card" content="summary">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ff7043">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <style>
+        body { font-family: "Hiragino Maru Gothic ProN", "Meiryo", sans-serif; background: #fff3e0; color: #333; max-width: 600px; margin: 0 auto; padding: 15px; }
+        h1 { font-size: 1.4rem; text-align: center; color: #d84315; margin-bottom: 5px;}
+        p.subtitle { text-align: center; font-size: 0.85rem; color: #795548; margin-bottom: 20px; }
+        
+        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 4px solid #ff7043;}
+        
+        label { font-weight: bold; font-size: 0.95rem; color: #d84315; display: block; margin-bottom: 8px;}
+        input[type="time"], input[type="text"], input[type="number"] { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #ffccbc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background: #fbfbfb; color: #d84315; font-weight: bold;}
+        input:focus { border-color: #ff7043; outline: none; }
+        
+        .task-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; background: #fff9c4; padding: 10px; border-radius: 8px; border: 1px dashed #fbc02d;}
+        .task-row input[type="text"] { flex: 2; margin-bottom: 0; border: 1px solid #ccc; background: #fff; color: #333; font-weight: normal;}
+        .task-row input[type="number"] { flex: 1; margin-bottom: 0; border: 1px solid #ccc; background: #fff; color: #333; font-weight: bold;}
+        .delete-btn { background: #e53935; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; height: 100%;}
+        
+        .add-btn { background: #fff; color: #ff7043; border: 2px dashed #ff7043; padding: 12px; width: 100%; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 20px;}
+        .calc-btn { background: #ff7043; color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #d84315; transition: 0.2s;}
+        .calc-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        /* 結果表示エリア */
+        .result-box { display: none; background: #ffebee; padding: 20px; border-radius: 12px; border: 3px solid #ef5350; margin-top: 25px; text-align: center; animation: fadeIn 0.5s;}
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .result-box h2 { font-size: 1.1rem; color: #c62828; margin-top: 0; margin-bottom: 5px;}
+        .deadline-time { font-size: 2.8rem; font-weight: bold; color: #b71c1c; margin: 10px 0; line-height: 1;}
+        .total-min { font-size: 0.9rem; color: #666; margin-bottom: 20px;}
+
+        /* タイムライン */
+        .timeline { text-align: left; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ffcdd2;}
+        .timeline-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #ef9a9a; font-size: 0.95rem; color: #333;}
+        .timeline-item:last-child { border-bottom: none; font-weight: bold; color: #d84315; }
+        .timeline-time { font-weight: bold; color: #c62828; width: 60px;}
+
+        /* 広告用CSS */
+        .ad-box { margin-top: 30px; padding: 15px; background: #fff; border: 1px solid #eee; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);}
+        .ad-copy { font-size: 0.9rem; color: #00838f; font-weight: bold; margin-top: 0; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>⏰ 起床・準備タイム逆算メーカー</h1>
+    <p class="subtitle">電車の時間から、行動開始のデッドラインを算出</p>
+
+    <div class="card">
+        <label>🚃 乗る電車の時間（目標の出発時間）</label>
+        <input type="time" id="target-time" value="09:00" required>
+    </div>
+
+    <div class="card">
+        <label>💄 準備にかかるタスクと時間（分）</label>
+        <p style="font-size:0.8rem; color:#666; margin-top:0;">※下から上の順番で逆算されます</p>
+        
+        <div id="task-container">
+            <div class="task-row">
+                <input type="text" value="シャワー・着替え" placeholder="タスク名">
+                <input type="number" value="20" min="0">分
+                <button class="delete-btn" onclick="this.parentElement.remove()">×</button>
+            </div>
+            <div class="task-row">
+                <input type="text" value="メイク・髪のセット" placeholder="タスク名">
+                <input type="number" value="30" min="0">分
+                <button class="delete-btn" onclick="this.parentElement.remove()">×</button>
+            </div>
+            <div class="task-row">
+                <input type="text" value="朝食・コーヒー" placeholder="タスク名">
+                <input type="number" value="15" min="0">分
+                <button class="delete-btn" onclick="this.parentElement.remove()">×</button>
+            </div>
+            <div class="task-row" style="background: #e3f2fd; border-color: #90caf9;">
+                <input type="text" value="駅までの移動時間" placeholder="タスク名">
+                <input type="number" value="15" min="0">分
+                <button class="delete-btn" onclick="this.parentElement.remove()">×</button>
+            </div>
+        </div>
+
+        <button class="add-btn" onclick="addTask()">＋ タスクを追加する</button>
+        <button class="calc-btn" onclick="calculateTime()">デッドラインを計算</button>
+
+        <div class="result-box" id="result-box">
+            <h2>🚨 あなたが起きる（準備を始める）時間</h2>
+            <div class="deadline-time" id="start-time-display">00:00</div>
+            <div class="total-min" id="total-min-display">合計準備時間: 0分</div>
+            
+            <div class="timeline" id="timeline-box">
+                </div>
+        </div>
+    </div>
+
+    <div class="ad-box">
+        <p class="ad-copy">💇‍♀️ お出かけ前の美容室・サロン予約はお済みですか？</p>
+        <div style="margin-top: 10px;">
+            <a href="#" style="display:block; background:#ec407a; color:#fff; padding:15px; text-decoration:none; border-radius:8px; font-weight:bold; font-size: 1.1rem; box-shadow: 0 4px 0 #c2185b;">✨ 楽天ビューティでサロンを探す</a>
+        </div>
+    </div>
+
+    <script>
+        // タスク追加機能
+        function addTask() {
+            const container = document.getElementById('task-container');
+            const row = document.createElement('div');
+            row.className = 'task-row';
+            row.innerHTML = `
+                <input type="text" placeholder="例: 忘れ物チェック">
+                <input type="number" value="5" min="0">分
+                <button class="delete-btn" onclick="this.parentElement.remove()">×</button>
+            `;
+            container.appendChild(row);
+        }
+
+        // 逆算ロジック
+        function calculateTime() {
+            const targetTimeStr = document.getElementById('target-time').value;
+            if (!targetTimeStr) {
+                alert("目標の出発時間を入力してください！");
+                return;
+            }
+
+            const rows = document.querySelectorAll('.task-row');
+            if (rows.length === 0) {
+                alert("タスクを1つ以上追加してください。");
+                return;
+            }
+
+            // 目標時間をDateオブジェクトに変換（日付は適当な今日に設定）
+            const [hours, minutes] = targetTimeStr.split(':');
+            let currentTime = new Date();
+            currentTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+
+            let totalMinutes = 0;
+            let timelineHTML = '';
+            
+            // タスクを逆順に処理（最後から最初へ引き算していくため、配列を逆さまにして計算）
+            // UIでは上が先、下が後なので、表示用のタイムライン配列を作る
+            let timelineItems = [];
+
+            // ゴール地点（出発）をタイムラインの最後に追加
+            timelineItems.unshift({
+                timeStr: formatTime(currentTime),
+                taskName: "🏠 家を出発！（目標時間）"
+            });
+
+            // タスクを下から順に（駅までの移動 → 朝食 → メイク...）逆算していく
+            for (let i = rows.length - 1; i >= 0; i--) {
+                const inputs = rows[i].querySelectorAll('input');
+                const taskName = inputs[0].value || `タスク ${i + 1}`;
+                const taskMin = parseInt(inputs[1].value) || 0;
+
+                totalMinutes += taskMin;
+                
+                // 時間を引き算
+                currentTime.setMinutes(currentTime.getMinutes() - taskMin);
+
+                // タイムラインの「前」に追加していく
+                timelineItems.unshift({
+                    timeStr: formatTime(currentTime),
+                    taskName: `開始：${taskName} (${taskMin}分)`
+                });
+            }
+
+            // タイムラインのHTMLを生成
+            timelineItems.forEach(item => {
+                timelineHTML += `
+                    <div class="timeline-item">
+                        <span class="timeline-time">${item.timeStr}</span>
+                        <span>${item.taskName}</span>
+                    </div>
+                `;
+            });
+
+            // 結果を画面に表示
+            document.getElementById('start-time-display').innerText = formatTime(currentTime);
+            document.getElementById('total-min-display').innerText = `合計準備時間: ${totalMinutes}分`;
+            document.getElementById('timeline-box').innerHTML = timelineHTML;
+            document.getElementById('result-box').style.display = 'block';
+
+            // 結果までスクロール
+            document.getElementById('result-box').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 時間フォーマット用関数 (HH:MM)
+        function formatTime(date) {
+            return String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+        }
+    </script>
+</body>
+</html>
